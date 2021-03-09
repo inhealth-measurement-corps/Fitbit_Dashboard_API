@@ -5,6 +5,9 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
+@app.route('/')
+def hello():
+    return 'Hello'
 @app.route('/get_last_sync_date/<patient_population>')
 def get_last_sync_date(patient_population):
     conn = pymssql.connect(server= 'inhealth.wse.jhu.edu', user='WIN\\WSE-MeasurementCorps', password='KwGCyTn97nSkFGaFnwP', database='master')
