@@ -4,10 +4,10 @@
 
 ############################################################
 #                                                          #
-# Simple script to connect to a remote mysql database      #
+# Simple script to connect to a remote mssql database      #
 #                                                          #
 #                                                          #
-# Install MySQLdb package by running:                      #
+# Install MSSQLdb package by running:                      #
 #                                                          #
 #                       pip install MySQL-python           #
 #                                                          #
@@ -242,7 +242,7 @@ def is_token_fresh_introspect(token_dict, uid):
     print("Introspect for " + uid + ":\n" + r.text)
     introspect_json = json.loads(r.text)
     if "active" in introspect_json:
-        print introspect_json["active"]
+        print (introspect_json["active"])
         return introspect_json["active"]
     else:
         return False
@@ -317,7 +317,7 @@ def data_retrieval_routine(token_dict, uid):
             execute_weight(token_dict, uid, date_string)
             # execute_user_info(token_dict, uid)
         except ValueError as vale:
-            print vale
+            print (vale)
 
         # query_start_date = last_logged_date + datetime.timedelta(days=1)
         # force rewrite last week's data
@@ -332,9 +332,9 @@ def data_retrieval_routine(token_dict, uid):
         #     print("Already retrieved yesterday's data.")
 
     except ValueError as ve:
-        print ve
+        print (ve)
 
-    print "\t-------data as of yesterday that is: " + str(yesterday.date()) + "-------"
+    print ("\t-------data as of yesterday that is: " + str(yesterday.date()) + "-------")
 
 
 def loop_retroactive_data(token_dict, uid, query_start_date, query_end_date):
@@ -367,7 +367,7 @@ def insert_user_info(user_json):
         dbhandler.execute(stmt)
 
     except Exception as e:
-        print "EXCEPTION IN insert_user_info: " + str(e)
+        print ("EXCEPTION IN insert_user_info: " + str(e))
         print(dbhandler._last_executed)
 
     finally:
@@ -393,7 +393,7 @@ def execute_heart_and_step(token_dict, uid, date_string, device_dict):
         insert_intraday_dict(time_dict)
 
     except ValueError as ve:
-        print ve
+        print (ve)
 
 
 def retroactive_execute_heart_and_step(token_dict, uid, date_string):
@@ -417,7 +417,7 @@ def retroactive_execute_heart_and_step(token_dict, uid, date_string):
         insert_intraday_dict(time_dict)
 
     except ValueError as ve:
-        print ve
+        print (ve)
 
 
 
@@ -606,7 +606,7 @@ def combine_activity_levels(sedentary_payload, light_active_payload, fairly_acti
 
 
 def make_intraday_dict_from_json_datas(heart_rate_json, step_count_json, distance_json, activity_level_dict, device_dict, uid):
-    print "making intraday hr/step dict from user: %s" % uid
+    print ("making intraday hr/step dict from user: %s" % uid)
     def has_synced_yesterday(device_info_dict):
         print("HAS SYNCED RECENTLY?: " + str(device_info_dict.values()))
         for device_info in device_info_dict.values():
@@ -915,7 +915,7 @@ def insert_weight_demo(time_pair):
     for time in time_pair:
         fitbit_data = time_pair[time]
         # print(str(time) + " / " + str(fitbit_data))
-        insert_set.append(fitbit_data.uid, fitbit_data.weight, str(datetime.datetime.now())))
+        insert_set.append(fitbit_data.uid, fitbit_data.weight, str(datetime.datetime.now()))
 
     try:
         connection = db.Connection(host=HOST, port=PORT,
@@ -936,7 +936,7 @@ def insert_weight_demo(time_pair):
         insert_cursor.executemany(stmt, insert_set)
 
     except Exception as e:
-        print "EXCEPTION IN insert_weight_demo: " + str(e)
+        print ("EXCEPTION IN insert_weight_demo: " + str(e))
 
     finally:
         connection.commit()
@@ -972,7 +972,7 @@ def insert_weight_dict(time_pair):
         insert_cursor.executemany(stmt, insert_set)
 
     except Exception as e:
-        print "EXCEPTION IN insert_weight_dict: " + str(e)
+        print("EXCEPTION IN insert_weight_dict: " + str(e))
 
     finally:
         connection.commit()
@@ -1012,7 +1012,7 @@ def insert_intraday_dict(time_pair):
 
     except Exception as e:
         traceback.print_exc()
-        print "EXCEPTION IN insert_intraday_dict: " + str(e)
+        print ("EXCEPTION IN insert_intraday_dict: " + str(e))
 
     finally:
         connection.commit()
@@ -1043,7 +1043,7 @@ def insert_daily_activity(ds):
         dbhandler.execute(insert_stmt, insert_set)
 
     except Exception as e:
-        print "EXCEPTION IN insert_daily_activity: " + str(e)
+        print ("EXCEPTION IN insert_daily_activity: " + str(e))
         print(dbhandler._last_executed)
         traceback.print_exc()
 
@@ -1065,7 +1065,7 @@ def insert_noncompliance_ping(user_id, ping_date, sync_ping_type=0):
         dbhandler.execute(stmt, (ping_date, user_id, 1, sync_ping_type, str(datetime.datetime.now())))
 
     except Exception as e:
-        print "EXCEPTION IN insert_noncompliance_ping: " + str(e)
+        print ("EXCEPTION IN insert_noncompliance_ping: " + str(e))
 
     finally:
         connection.commit()
@@ -1083,10 +1083,10 @@ def connect_db():
         dbhandler.execute("")
         result = dbhandler.fetchall()
         for item in result:
-            print item
+            print (item)
 
     except Exception as e:
-        print e
+        print (e)
 
     finally:
         connection.commit()
@@ -1108,7 +1108,7 @@ def get_query_start_date(uid):
             return None
         except Exception as e:
             traceback.print_exc()
-            print "EXCEPTION get_db_last_hr_record: " + str(e)
+            print ("EXCEPTION get_db_last_hr_record: " + str(e))
         finally:
             connection.close()
     result = get_db_last_hr_record()
