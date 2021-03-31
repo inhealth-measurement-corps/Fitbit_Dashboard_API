@@ -1,24 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# edited by Allison Pearson February 2021
+# edited by Allison Pearson March 2021
 
 ############################################################
 #                                                          #
 # Simple script to connect to a remote mssql database      #
 #                                                          #
 #                                                          #
-# Install MSSQLdb package by running:                      #
-#                                                          #
-#                       pip install MySQL-python           #
 #                                                          #
 ############################################################
 
 import json
 import datetime
-import MySQLdb as db
-import MySQLdb.cursors as cursors
+#import MySQLdb as db
+#import MySQLdb.cursors as cursors
 
-import json
+#import json
+import pyodbc as db
+
+#cnxn = pyodbc.connect("Driver={Microsoft SQL Management Studio};"
+                    #  "Server=
+                    #  "Database=
+                    #  "Trusted_Connection=yes;")
+#cursors = cnxn.cursor()
 import fitbit
 import requests
 import base64
@@ -86,7 +90,7 @@ class DeviceInfo:
 # These are the secrets etc from Fitbit developer
 OAuthTwoClientID = "22CMWS"
 ClientOrConsumerSecret = "83418e86bc034c4f162277e411144aaa"
-base64_key_secret = base64.b64encode(OAuthTwoClientID + ":" + ClientOrConsumerSecret)
+base64_key_secret = (OAuthTwoClientID + ":" + ClientOrConsumerSecret).encode
 
 # This is the Fitbit URL
 TokenURL = "https://api.fitbit.com/oauth2/token"
@@ -360,7 +364,6 @@ def insert_user_info(user_json):
     try:
         connection = db.Connection(host=HOST, port=PORT,
                                    user=USER, passwd=PASSWORD, db=DB)
-
         user = user_json["user"]
         dbhandler = connection.cursor()
         stmt = "UPDATE PC_Users SET height=%s WHERE fitbit_uid='%s'" % (user["height"], user["encodedId"])
