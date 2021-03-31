@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# edited by Allison Pearson March 2021
+# edited by Allison Pearson February 2021
 
 ############################################################
 #                                                          #
@@ -90,7 +90,9 @@ class DeviceInfo:
 # These are the secrets etc from Fitbit developer
 OAuthTwoClientID = "22CMWS"
 ClientOrConsumerSecret = "83418e86bc034c4f162277e411144aaa"
-base64_key_secret = (OAuthTwoClientID + ":" + ClientOrConsumerSecret).encode
+#base64_key_secret = (OAuthTwoClientID + ":" + ClientOrConsumerSecret).encode()
+secret = OAuthTwoClientID + ":" + ClientOrConsumerSecret
+base64_key_secret = base64.b64encode(secret.encode())
 
 # This is the Fitbit URL
 TokenURL = "https://api.fitbit.com/oauth2/token"
@@ -187,7 +189,7 @@ def register_new_auth_code():
     print("Authorizing...")
 
     AuthorisationCode = sys.argv[1]
-    headers = {'Authorization':'Basic ' + base64_key_secret,
+    headers = {'Authorization':'Basic ' + base64_key_secret.decode(),
                'Content-Type':'application/x-www-form-urlencoded'}
 
     BodyText = {'code' : AuthorisationCode,
@@ -255,7 +257,7 @@ def is_token_fresh_introspect(token_dict, uid):
     # else:
     #     return True
 
-def refresh_multi_user_token(token_dict):
+def refresh_multi_user_token(token_dict,query_uid="",q_start_date="",q_end_date=""):
     json_user_datas = token_dict
     for user in json_user_datas["users"]:
         uid = json_user_datas["users"][user]["user_id"]
@@ -263,6 +265,13 @@ def refresh_multi_user_token(token_dict):
 
         # is_token_fresh_introspect(token_dict, uid)
         # continue
+
+        if (query_uid != ""):
+           if (query_uid == uid and is_token_fresh_introspect):
+              data_retrieval_routine(json_user_datas, user, q_start_date = q_start_date, q_end_date = q_end_date)
+              break
+           else:
+               continue
 
         if is_token_fresh_introspect(token_dict, uid):
             data_retrieval_routine(json_user_datas, user)
@@ -294,7 +303,10 @@ def refresh_multi_user_token(token_dict):
                 json_user_datas["users"][user]["access_token"] = response["access_token"]
                 json_user_datas["users"][user]["refresh_token"] = response["refresh_token"]
                 json_user_datas["users"][user]["modified_at"] = str(datetime.datetime.now())
-                data_retrieval_routine(json_user_datas, user)
+                if query_uid == "" or query_uid == uid:                
+                   data_retrieval_routine(json_user_datas, user,q_start_date=q_start_date,q_end_date = q_end_date)
+                else:
+                    continue
 
     write_file = open("tokens.json", 'w+')
     json.dump(json_user_datas, write_file, indent=4)
@@ -304,7 +316,7 @@ def refresh_multi_user_token(token_dict):
     return json_user_datas
 
 
-def data_retrieval_routine(token_dict, uid):
+def data_retrieval_routine(token_dict, uid, q_start_date="",q_end_date=""):
     yesterday = datetime.datetime.now() - datetime.timedelta(days = 1)
 
     date_string = str(yesterday.date())
@@ -325,10 +337,17 @@ def data_retrieval_routine(token_dict, uid):
 
         # query_start_date = last_logged_date + datetime.timedelta(days=1)
         # force rewrite last week's data
-        query_start_date = datetime.date.today() - datetime.timedelta(start_from_days_ago)
-        query_end_date = datetime.date.today() - datetime.timedelta(end_on_days_ago)
+        
+        if q_start_date =="" and q_end_date == "":
+           query_start_date = datetime.date.today() - datetime.timedelta(start_from_days_ago)
+           query_end_date = datetime.date.today() - datetime.tiemdelta(end_on_days_ago)
+        else:
+           query_start_date = datetime.datetime.strptime(q_start_date,'%Y-%m-%d').date()
+           query_end_date = datetime.datetime.strptime(q_end_date,'%Y-%m-%d').date()
 
-        if query_start_date < datetime.date.today():
+        print("query start date: " + str(query_start_date))
+
+        if query_start_date < datetime.date.today():    
             print("Retroactively fetching data for %s from %s to %s"
                   % (uid, str(query_start_date), str(query_end_date)))
             loop_retroactive_data(token_dict, uid, query_start_date, query_end_date)
@@ -339,7 +358,6 @@ def data_retrieval_routine(token_dict, uid):
         print (ve)
 
     print ("\t-------data as of yesterday that is: " + str(yesterday.date()) + "-------")
-
 
 def loop_retroactive_data(token_dict, uid, query_start_date, query_end_date):
     temp_date = query_start_date
@@ -440,18 +458,22 @@ def multi_login_routine():
         print("Populating data by refreshing previous token sessions.")
         token_dict = get_multi_token_dict()
         refresh_multi_user_token(token_dict)
-    elif(len(sys.argv) == 3):
-        if(sys.argv[1] == "loop"):
-            # token_dict = get_multi_token_dict()
-            # for i in range(0, sys.argv[2]):
-            exit()
+    elif sys.argv[1] == "get":
+         if len(sys.argv) == 3:
+             print("Populating data by refreshing specified token: %s" % sys.argv[2])
+             token_dict = get_multi_token_dict()
+             refresh_multi_user_token(token_dict=token_dict, query_uid=sys.argv[2])
+         elif len(sys.argv) == 5:
+            print("Populating data by refreshing specified token: %s" % sys.argv[2])
+            print("start and end date %s ~ %s" % (sys.argv[3],sys.argv[4]))
+            token_dict = get_multi_token_dict()
+            refresh_multi_user_token(token_dict=token_dict,query_uid=sys.argv[2],q_start_date=sys.argv[3],q_end_date=sys.argv[4])   
 
     else:
-        print("Needs one or no argument")
+        print("Invalid input. Usage:\nRun python dbtester.py to refresh all users; \n Run python dbtester.py [code] to register a new user or update access token; \n Run python dbtester.py get [fibit_uid] [date] [date] to pull a certain user's data during the given dates")
         sys.exit()
-    # token_dict = token_refresh(token_dict)
+   # token_dict = token_refresh(token_dict)
     return token_dict
-
 
 def login_routine():
     if(len(sys.argv) == 2):
